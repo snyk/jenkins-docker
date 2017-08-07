@@ -12,11 +12,19 @@ RUN apt-get install -y maven python-pip python-dev build-essential
 RUN pip install --upgrade pip
 RUN pip install --upgrade virtualenv
 
+#Install gradle
+RUN curl -L https://services.gradle.org/distributions/gradle-2.8-bin.zip -o gradle-2.8-bin.zip
+RUN apt-get install -y unzip
+RUN unzip gradle-2.8-bin.zip
+ENV GRADLE_HOME=/gradle-2.8
+ENV PATH=$PATH:$GRADLE_HOME/bin
+
 # Don't run as root
+RUN chmod -R a+wrx /home/node
 WORKDIR /home/node
 USER node
-
-
+ENV HOME /home/node
+ENV M2 /home/node/.m2
 ###################################
 # Custom Snyk configuration       #
 # Redefine in derived Dockerfile, #
