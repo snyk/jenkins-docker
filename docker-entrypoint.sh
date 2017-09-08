@@ -16,6 +16,8 @@ if [ $? -ne "0" ]; then
   exit 2
 fi
 
+useradd -m -u $USER_ID -o -d /home/node docker-user
+
 TEST_SETTINGS="";
 if [ ! -z $TARGET_FILE ]; then
   TEST_SETTINGS="--file=${TARGET_FILE} "
@@ -24,22 +26,24 @@ fi
 if [ ! -z $ORGANIZATION ]; then
   TEST_SETTINGS="${TEST_SETTINGS} --org=${ORGANIZATION}"
 fi
-
-if [ -d /home/node/.m2/repository ]; then
-    # Add .m2 path position - because we run as a different user
-    if [ ! -z $ENV_FLAGS ]; then
-      ENV_FLAGS="-Dmaven.repo.local=/home/node/.m2/repository ${ENV_FLAGS}"
-    else
-      ENV_FLAGS="-Dmaven.repo.local=/home/node/.m2/repository"
-    fi
-fi
+#
+# if [ -d /home/node/.m2/repository ]; then
+#     # Add .m2 path position - because we run as a different user
+#     if [ ! -z $ENV_FLAGS ]; then
+#       # ENV_FLAGS="-Dmaven.repo.local=/home/node/.m2/repository ${ENV_FLAGS}"
+#     else
+#       # ENV_FLAGS="-Dmaven.repo.local=/home/node/.m2/repository"
+#     fi
+# fi
 
 if [ ! -z $ENV_FLAGS ]; then
   TEST_SETTINGS="${TEST_SETTINGS} -- ${ENV_FLAGS}"
 fi
 
-snyk test --json $TEST_SETTINGS > res.json
+export JAVA_OPTS="-Xms512m -Xmx512m -XX:ReservedCodeCacheSize=128m"
+su docker-user -m -c "cd $PROJECT_PATH/$PROJECT_FOLDER && snyk test --json $TEST_SETTINGS > res.json"
 RC=$?
+cd $PROJECT_PATH/$PROJECT_FOLDER
 cat res.json
 
 if [ $RC -ne "0" ] && [ $RC -ne "1" ]; then
@@ -51,7 +55,7 @@ cat res.json | jq '.vulnerabilities|= map(. + {severity_numeric: (if(.severity) 
 cat /home/node/snyk_report.css > snyk_report.css
 # check monitor
 if [ ! -z $MONITOR ]; then
-  snyk monitor $TEST_SETTINGS
+  su docker-user -m -c "cd $PROJECT_PATH/$PROJECT_FOLDER && snyk monitor $TEST_SETTINGS"
 fi
 
 rm res.json

@@ -19,12 +19,31 @@ RUN unzip gradle-2.8-bin.zip
 ENV GRADLE_HOME=/gradle-2.8
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
-# Don't run as root
+#Install sbt
+RUN echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
+RUN apt-get install apt-transport-https
+RUN echo "deb http://http.debian.net/debian jessie-backports main" |  tee --append /etc/apt/sources.list.d/jessie-backports.list > /dev/null
+RUN apt-get update
+#RUN apt-get install -y -t jessie-backports openjdk-8-jdk
+#RUN update-java-alternatives -s java-1.8.0-openjdk-amd64
+#RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 642AC823
+RUN curl -L -o sbt.deb http://dl.bintray.com/sbt/debian/sbt-0.13.16.deb
+RUN dpkg -i sbt.deb
+RUN apt-get update
+# RUN echo "docker-user:x:503:503::/home/node:/bin/bash" >> /etc/passwd
+
+RUN echo "docker-user ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
+RUN mkdir -p /home/node/.sbt/0.13/plugins
+RUN echo "addSbtPlugin(\"net.virtual-void\" % \"sbt-dependency-graph\" % \"0.8.2\")" >> /home/node/.sbt/0.13/plugins/build.sbt
+RUN echo "net.virtualvoid.sbt.graph.DependencyGraphSettings.graphSettings" >> /home/node/.sbt/0.13/user.sbt
+
 RUN chmod -R a+wrx /home/node
 WORKDIR /home/node
-USER node
+# USER node
 ENV HOME /home/node
 ENV M2 /home/node/.m2
+
+# Don't run as root
 ###################################
 # Custom Snyk configuration       #
 # Redefine in derived Dockerfile, #
