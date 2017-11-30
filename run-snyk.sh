@@ -1,6 +1,8 @@
 TEST_SETTINGS="";
 if [ ! -z $TARGET_FILE ]; then
-  TEST_SETTINGS="--file=${TARGET_FILE} "
+  PROJECT_PATH=$(dirname "${TARGET_FILE}")
+  MANIFEST_NAME=$(basename "${TARGET_FILE}")
+  TEST_SETTINGS="--file=${MANIFEST_NAME} "
 fi
 
 if [ ! -z $ORGANIZATION ]; then
@@ -11,7 +13,7 @@ if [ ! -z $ENV_FLAGS ]; then
   TEST_SETTINGS="${TEST_SETTINGS} -- ${ENV_FLAGS}"
 fi
 
-snyk test --json $TEST_SETTINGS > res.json
+snyk test $PROJECT_PATH --json $TEST_SETTINGS > res.json
 RC=$?
 cat res.json
 
@@ -24,7 +26,7 @@ cat res.json | jq '.vulnerabilities|= map(. + {severity_numeric: (if(.severity) 
 cat /home/node/snyk_report.css > snyk_report.css
 # check monitor
 if [ ! -z $MONITOR ]; then
-  snyk monitor $TEST_SETTINGS
+  snyk monitor $PROJECT_PATH $TEST_SETTINGS
 fi
 
 rm res.json
