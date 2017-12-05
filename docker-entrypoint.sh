@@ -10,11 +10,13 @@ if [ -z $PROJECT_FOLDER ]; then
   echo 'Missing $PROJECT_FOLDER'
   exit 1
 fi
-cd "$PROJECT_PATH/$PROJECT_FOLDER"
-if [ $? -ne "0" ]; then
-  echo 'Invalid project path ' \"$PROJECT_PATH/$PROJECT_FOLDER\"
+
+if [ ! -d "$PROJECT_PATH/$PROJECT_FOLDER" ]; then
+  echo 'Missing project path ' \"$PROJECT_PATH/$PROJECT_FOLDER\"
   exit 2
 fi
+
+cd "$PROJECT_PATH/$PROJECT_FOLDER"
 
 if [ -z $USER_ID ]; then
   USER_ID=`id -u`
